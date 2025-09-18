@@ -1,0 +1,175 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Docker
+.dockerignore
+.env.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Configuration files (contain secrets)
+config/**/*.ini
+config/**/*.xml
+config/**/*.log
+config/**/ipc-socket
+config/**/*.json
+config/**/*.yaml
+config/**/*.yml
+config/**/*.bak
+
+# Environment files (contain secrets)
+.env.local
+.env.*.local
+
+# Database files
+*.sqlite
+*.db
+*.sql
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+coverage.xml
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# Celery beat schedule config file
+celerybeat-schedule.db
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# mypy
+.mypy_cache
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# node
+node_modules/
+
+# Services specific
+services/*/config/
+services/*/logs/
+services/*/.env
+services/*/data/
+services/*/cache/
+
+# Root data directories
+data/
+config/
+cache/
+
+# Backup files
+*.bak
+*.backup
+
+# VMware
+*.vmx
+*.vmxf
+*.vmdk
+*.nvram
+*.vmsd
+*.vssd
+
+# VirtualBox
+*.vdi
+*.vmdk
+*.vhd

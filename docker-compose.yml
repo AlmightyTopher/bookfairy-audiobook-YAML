@@ -1,0 +1,221 @@
+services:
+  # Discord Bot - Central Orchestration (Commented out - needs Dockerfile)
+  # discord-bot:
+  #   build:
+  #     context: ./services/discord-bot
+  #     dockerfile: Dockerfile
+  #   container_name: bookfairy-discord-bot
+  #   environment:
+  #     - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN:-your_discord_bot_token_here}
+  #     - REDIS_URL=redis://redis:6379
+  #     - API_PORT=${DISCORD_BOT_PORT:-8080}
+  #     - DEBUG_MODE=${DEBUG_MODE:-false}
+  #     - CONFIG_PATH=${CONFIG_PATH:-./config}
+  #     - DOWNLOADS_PATH=${DOWNLOADS_PATH:-./data/downloads}
+  #     - LIBRARY_PATH=${LIBRARY_PATH:-./data/library}
+  #     - CACHE_PATH=${CACHE_PATH:-./data/cache}
+  #     - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_secure_password_here}
+  #   ports:
+  #     - "${DISCORD_BOT_PORT:-8080}:8080"
+  #   depends_on:
+  #     - redis
+  #     - lazylibrarian
+  #     - audiobookshelf
+  #     - qbittorrent
+  #   networks:
+  #     - bookfairy-network
+  #   volumes:
+  #     - ./logs:/app/logs
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '${DISCORD_BOT_CPU_LIMIT:-1}'
+  #         memory: ${DISCORD_BOT_MEMORY_LIMIT:-512m}
+  #   restart: unless-stopped
+
+  # LazyLibrarian - Audiobook Search and Management
+  lazylibrarian:
+    image: linuxserver/lazylibrarian:latest
+    container_name: bookfairy-lazylibrarian
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - CONFIG_PATH=${CONFIG_PATH:-./config}
+      - DOWNLOADS_PATH=${DOWNLOADS_PATH:-./data/downloads}
+      - LIBRARY_PATH=${LIBRARY_PATH:-./data/library}
+    ports:
+      - "${LAZYLIBRARIAN_PORT:-5299}:5299"
+    volumes:
+      - ${CONFIG_PATH:-./config}/lazylibrarian:/config
+      - ${DOWNLOADS_PATH:-./data/downloads}:/downloads
+      - ${LIBRARY_PATH:-./data/library}:/books
+    networks:
+      - bookfairy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5299/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '${LAZYLIBRARIAN_CPU_LIMIT:-2}'
+          memory: ${LAZYLIBRARIAN_MEMORY_LIMIT:-1g}
+    restart: unless-stopped
+
+  # Prowlarr - Indexer Management
+  prowlarr:
+    image: linuxserver/prowlarr:latest
+    container_name: bookfairy-prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - CONFIG_PATH=${CONFIG_PATH:-./config}
+    ports:
+      - "${PROWLARR_PORT:-9696}:9696"
+    volumes:
+      - ${CONFIG_PATH:-./config}/prowlarr:/config
+    networks:
+      - bookfairy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9696/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          cpus: '${PROWLARR_CPU_LIMIT:-1}'
+          memory: ${PROWLARR_MEMORY_LIMIT:-512m}
+    restart: unless-stopped
+
+  # qBittorrent - Download Client
+  qbittorrent:
+    image: linuxserver/qbittorrent:latest
+    container_name: bookfairy-qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=UTC
+      - WEBUI_PORT=8081
+      - CONFIG_PATH=${CONFIG_PATH:-./config}
+      - DOWNLOADS_PATH=${DOWNLOADS_PATH:-./data/downloads}
+    ports:
+      - "${QBITTORRENT_PORT:-8081}:8081"
+      - "6881:6881"
+      - "6881:6881/udp"
+    volumes:
+      - ${CONFIG_PATH:-./config}/qbittorrent:/config
+      - ${DOWNLOADS_PATH:-./data/downloads}:/downloads
+    networks:
+      - bookfairy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '${QBITTORRENT_CPU_LIMIT:-4}'
+          memory: ${QBITTORRENT_MEMORY_LIMIT:-2g}
+    restart: unless-stopped
+
+  # Audiobookshelf - Library Management and Streaming
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    container_name: bookfairy-audiobookshelf
+    environment:
+      - TZ=UTC
+      - LIBRARY_PATH=${LIBRARY_PATH:-./data/library}
+      - CONFIG_PATH=${CONFIG_PATH:-./config}
+      - CACHE_PATH=${CACHE_PATH:-./data/cache}
+    ports:
+      - "${AUDIOBOOKSHELF_PORT:-13378}:80"
+    volumes:
+      - ${LIBRARY_PATH:-./data/library}:/audiobooks/host
+      - ${CONFIG_PATH:-./config}/audiobookshelf:/config
+      - ${CACHE_PATH:-./data/cache}/audiobookshelf:/metadata
+    networks:
+      - bookfairy-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '${AUDIOBOOKSHELF_CPU_LIMIT:-2}'
+          memory: ${AUDIOBOOKSHELF_MEMORY_LIMIT:-1g}
+    restart: unless-stopped
+
+  # Redis - Caching and State Management
+  redis:
+    image: redis:7-alpine
+    container_name: bookfairy-redis
+    command: ["sh", "-c", "redis-server --requirepass ${REDIS_PASSWORD:-redis_secure_password_here}"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - bookfairy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '${REDIS_CPU_LIMIT:-1}'
+          memory: ${REDIS_MEMORY_LIMIT:-512m}
+    restart: unless-stopped
+
+  # Prometheus - Monitoring (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bookfairy-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    networks:
+      - bookfairy-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+
+networks:
+  bookfairy-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}
